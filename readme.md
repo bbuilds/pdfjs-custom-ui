@@ -63,14 +63,10 @@ npm run build
 
 ## Keyboard Shortcuts
 
-- `→` or `↓`: Next page
-- `←` or `↑`: Previous page
-- `+`: Zoom in
-- `-`: Zoom out
-- `Ctrl+F` or `/`: Open search
+- `→`: Next page
+- `←`: Previous page
 - `F`: Toggle fullscreen
 - `Esc`: Close search or exit fullscreen
-- `Ctrl+O`: Open file dialog
 
 ## Browser Compatibility
 
