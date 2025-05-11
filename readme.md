@@ -11,7 +11,6 @@ A modern, responsive PDF viewer built with PDF.js that provides a clean and intu
 - 🔍 Text search functionality
 - 📱 Responsive design that works across devices
 - ⌨️ Keyboard shortcuts for common actions
-- 📂 Drag and drop PDF file loading
 
 ## Technologies Used
 

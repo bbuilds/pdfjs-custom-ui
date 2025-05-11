@@ -25,9 +25,6 @@ const filenameElement = document.getElementById("filename");
  * Initializes the PDF viewer
  */
 export async function initializePdfViewer() {
-  const pdfjsLib = await loadPdfJs();
-
-  // Initially show sample PDF or open dialog
   const pdfUrl =
     "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf";
   loadPdfFromUrl(pdfUrl);
