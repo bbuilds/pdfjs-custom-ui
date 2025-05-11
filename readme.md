@@ -2,6 +2,10 @@
 
 A modern, responsive PDF viewer built with PDF.js that provides a clean and intuitive interface for reading PDF documents in the browser.
 
+## Live Demo
+
+[https://bbuilds.github.io/pdfjs-custom-ui/](https://bbuilds.github.io/pdfjs-custom-ui/)
+
 ## Features
 
 - 📄 Render and display PDF documents with high fidelity
