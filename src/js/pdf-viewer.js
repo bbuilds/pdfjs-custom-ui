@@ -1,6 +1,13 @@
 import { loadPdfJs } from "./pdf-loader.js";
 import { createThumbnail } from "./thumbnails.js";
 import { createOutlineItem } from "./outline.js";
+import {
+  initAnalytics,
+  trackPageView,
+  trackInteraction,
+  trackDocumentEvent,
+  trackSessionEnd,
+} from "./ga-events.js";
 
 let pdfDocument = null;
 let pdfViewer = null;
@@ -33,6 +40,11 @@ export async function initializePdfViewer() {
   document
     .getElementById("pdf-viewer")
     .addEventListener("scroll", handleScroll);
+
+  // Track session end when user leaves page
+  window.addEventListener("beforeunload", () => {
+    trackSessionEnd("page_close");
+  });
 }
 
 // Track which page is currently visible during scrolling
@@ -46,6 +58,12 @@ function handleScroll(e) {
     updateCurrentPageFromScroll();
     // Also check for pages that need rendering
     checkPagesNeedRendering();
+
+    // Track scroll interaction
+    trackInteraction("scroll", {
+      current_page: currentPageNumber,
+      scroll_position: document.getElementById("pdf-viewer").scrollTop,
+    });
   }, 100);
 }
 
@@ -89,11 +107,20 @@ function updateCurrentPageFromScroll() {
   });
 
   if (maxVisiblePage && maxVisiblePage !== currentPageNumber) {
+    const previousPage = currentPageNumber;
     currentPageNumber = maxVisiblePage;
     currentPageInput.value = maxVisiblePage;
 
     // Update thumbnail highlighting
     highlightThumbnail(currentPageNumber);
+
+    // Track page view from scroll
+    trackPageView(currentPageNumber, "scroll");
+    trackInteraction("page_change", {
+      from_page: previousPage,
+      to_page: currentPageNumber,
+      method: "scroll",
+    });
   }
 }
 
@@ -156,7 +183,13 @@ export async function loadPdfFromUrl(url) {
 
     const loadingTask = pdfjsLib.getDocument(url);
 
+    // Track document loading
+    trackDocumentEvent("loading_started", { source: "url", url: url });
+
+    const loadingStartTime = performance.now();
     pdfDocument = await loadingTask.promise;
+    const loadingTime = performance.now() - loadingStartTime;
+
     totalPages = pdfDocument.numPages;
 
     // Update UI with document info
@@ -166,7 +199,23 @@ export async function loadPdfFromUrl(url) {
 
     // Set document title
     const metadata = await pdfDocument.getMetadata();
-    filenameElement.textContent = url.split("/").pop() || "Document.pdf";
+    const filename = url.split("/").pop() || "Document.pdf";
+    filenameElement.textContent = filename;
+
+    // Initialize analytics for this document
+    initAnalytics({
+      filename: filename,
+      totalPages: totalPages,
+      documentId: metadata?.info?.PDFFormatVersion || "unknown",
+      fileSize: metadata?.contentLength || 0,
+    });
+
+    // Track document loaded successfully
+    trackDocumentEvent("loaded", {
+      loading_time_ms: Math.round(loadingTime),
+      page_count: totalPages,
+      has_outline: Boolean(await pdfDocument.getOutline()),
+    });
 
     // Clear the viewer container
     viewerContainer.innerHTML = "";
@@ -185,10 +234,20 @@ export async function loadPdfFromUrl(url) {
     // Load document outline if available
     loadDocumentOutline();
 
+    // Track first page view
+    trackPageView(1, "initial_load");
+
     return true;
   } catch (error) {
     console.error("Error loading PDF:", error);
     viewerContainer.innerHTML = `<div class="error">Failed to load PDF: ${error.message}</div>`;
+
+    // Track error loading document
+    trackDocumentEvent("load_error", {
+      error_message: error.message,
+      source: "url",
+    });
+
     return false;
   }
 }
@@ -366,11 +425,20 @@ export async function renderPage(pageNum, scrollToIt = true) {
     currentPageInput.value = pageNum;
     highlightThumbnail(pageNum);
 
+    // Track page view with navigation method parameter
+    if (scrollToIt) {
+      trackPageView(pageNum, "navigation");
+    }
+
     // Restore scroll position to prevent jumps unless explicitly asked to scroll
     if (!scrollToIt) {
       pdfViewer.scrollTop = currentScroll;
     } else {
       scrollToPage(pageNum);
+      trackInteraction("page_navigation", {
+        to_page: pageNum,
+        method: "button_click",
+      });
     }
 
     // Check if there's another page request pending
@@ -382,6 +450,12 @@ export async function renderPage(pageNum, scrollToIt = true) {
   } catch (error) {
     console.error("Error rendering page:", error);
     pageRendering = false;
+
+    // Track error rendering page
+    trackDocumentEvent("render_error", {
+      page_number: pageNum,
+      error_message: error.message,
+    });
   }
 }
 
@@ -432,6 +506,13 @@ function scrollToPage(pageNum) {
  */
 export function prevPage() {
   if (currentPageNumber <= 1) return;
+
+  trackInteraction("navigation", {
+    action: "previous_page",
+    from_page: currentPageNumber,
+    to_page: currentPageNumber - 1,
+  });
+
   renderPage(currentPageNumber - 1);
 }
 
@@ -440,6 +521,13 @@ export function prevPage() {
  */
 export function nextPage() {
   if (currentPageNumber >= totalPages) return;
+
+  trackInteraction("navigation", {
+    action: "next_page",
+    from_page: currentPageNumber,
+    to_page: currentPageNumber + 1,
+  });
+
   renderPage(currentPageNumber + 1);
 }
 
@@ -449,6 +537,13 @@ export function nextPage() {
  */
 export function goToPage(pageNum) {
   if (pageNum < 1 || pageNum > totalPages) return;
+
+  trackInteraction("navigation", {
+    action: "goto_page",
+    from_page: currentPageNumber,
+    to_page: pageNum,
+  });
+
   renderPage(pageNum);
 }
 
@@ -458,6 +553,12 @@ export function goToPage(pageNum) {
  */
 export function setZoom(scale) {
   if (!pdfDocument) return;
+
+  trackInteraction("zoom", {
+    previous_zoom: zoomLevel,
+    new_zoom: scale,
+    is_auto: scale === "auto",
+  });
 
   // Store current page to maintain position
   const previousPage = currentPageNumber;
@@ -618,14 +719,25 @@ async function loadDocumentOutline() {
       }
 
       outlineContainer.appendChild(outlineList);
+
+      // Track outline usage metrics
+      trackDocumentEvent("outline_loaded", {
+        outline_items_count: outline.length,
+      });
     } else {
       outlineContainer.innerHTML =
         '<p class="empty-outline">No outline available</p>';
+
+      trackDocumentEvent("no_outline", {});
     }
   } catch (error) {
     console.error("Error loading outline:", error);
     outlineContainer.innerHTML =
       '<p class="empty-outline">Error loading outline</p>';
+
+    trackDocumentEvent("outline_error", {
+      error_message: error.message,
+    });
   }
 }
 
@@ -636,6 +748,7 @@ async function loadDocumentOutline() {
 export async function searchInDocument(query) {
   if (!pdfDocument || !query) return { count: 0, results: [] };
 
+  const searchStartTime = performance.now();
   const results = [];
 
   for (let i = 1; i <= totalPages; i++) {
@@ -648,6 +761,18 @@ export async function searchInDocument(query) {
       results.push({ pageNumber: i, text });
     }
   }
+
+  const searchTime = performance.now() - searchStartTime;
+
+  // Track search activity
+  const analyticsData = {
+    query_length: query.length,
+    results_count: results.length,
+    search_time_ms: Math.round(searchTime),
+    found_results: results.length > 0,
+  };
+
+  trackInteraction("search", analyticsData);
 
   return { count: results.length, results };
 }
