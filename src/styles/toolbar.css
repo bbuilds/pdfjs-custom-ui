@@ -1,0 +1,129 @@
+/* Toolbar styles */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  height: 56px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.toolbar-left, .toolbar-center, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.toolbar-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius-md);
+  color: var(--color-primary);
+  transition: background-color var(--transition-fast);
+}
+
+.toolbar-button:hover {
+  background-color: var(--color-hover);
+}
+
+.toolbar-button:focus {
+  outline: none;
+  background-color: var(--color-focus);
+}
+
+.toolbar-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-2);
+  max-width: 200px;
+}
+
+#filename {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-2);
+}
+
+#current-page {
+  width: 40px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-1);
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+#zoom-level {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-1) var(--spacing-2);
+  background-color: var(--color-surface);
+  cursor: pointer;
+}
+
+/* Responsive toolbar */
+@media (max-width: 767px) {
+  .file-info {
+    display: none;
+  }
+  
+  .toolbar-center {
+    justify-content: flex-start;
+  }
+  
+  #zoom-level {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+  
+  .toolbar-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .toolbar-button svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  #current-page {
+    width: 32px;
+  }
+}

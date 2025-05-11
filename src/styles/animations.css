@@ -1,0 +1,95 @@
+/* Animation styles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Apply animations to specific elements */
+.pdf-page {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.sidebar-panel.active {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.search-container:not(.hidden) {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.thumbnail:hover {
+  animation: pulse 0.5s ease-in-out;
+}
+
+/* Transition effects */
+.toolbar, .sidebar, .pdf-container, .search-container {
+  transition: all var(--transition-normal);
+}
+
+.toolbar-button, .search-button, .sidebar-tab {
+  transition: all var(--transition-fast);
+}
+
+/* Hover effects */
+.toolbar-button:hover, .search-button:hover, .thumbnail:hover, .outline-item a:hover {
+  transition: all var(--transition-fast);
+}
+
+/* Page transitions */
+.pdf-page {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.pdf-page:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
